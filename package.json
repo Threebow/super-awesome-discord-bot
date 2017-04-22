@@ -1,0 +1,11 @@
+{
+  "name": "sadb",
+  "version": "0.0.1",
+  "description": "Test Discord Bot",
+  "main": "bot.js",
+  "author": "Threebow",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.0.0"
+  }
+}
