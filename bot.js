@@ -6,6 +6,7 @@ const prefix = botSettings.prefix;
 
 const bot = new Discord.Client({disableEveryone: true});
 bot.commands = new Discord.Collection();
+bot.mutes = require("./mutes.json");
 
 fs.readdir("./cmds/", (err, files) => {
 	if(err) console.error(err);
@@ -27,6 +28,29 @@ fs.readdir("./cmds/", (err, files) => {
 
 bot.on("ready", () => {
 	console.log(`Bot is ready! ${bot.user.username}`);
+
+	bot.setInterval(() => {
+		for(let i in bot.mutes) {
+			let time = bot.mutes[i].time;
+			let guildId = bot.mutes[i].guild;
+			let guild = bot.guilds.get(guildId);
+			let member = guild.members.get(i);
+			let mutedRole = guild.roles.find(r => r.name === "SADB Muted");
+			if(!mutedRole) continue;
+
+			if(Date.now() > time) {
+				console.log(`${i} is now able to be unmuted!`);
+
+				member.removeRole(mutedRole);
+				delete bot.mutes[i];
+
+				fs.writeFile("./mutes.json", JSON.stringify(bot.mutes), err => {
+					if(err) throw err;
+					console.log(`I have unmuted ${member.user.tag}.`);
+				});
+			}
+		}
+	}, 5000)
 });
 
 bot.on("message", async message => {
@@ -41,73 +65,6 @@ bot.on("message", async message => {
 
 	let cmd = bot.commands.get(command.slice(prefix.length));
 	if(cmd) cmd.run(bot, message, args);
-
-	// if(command === `${prefix}userinfo`) {
-	// 	let embed = new Discord.RichEmbed()
-	// 		.setAuthor(message.author.username)
-	// 		.setDescription("This is the user's info!")
-	// 		.setColor("#9B59B6")
-	// 		.addField("Full Username", message.author.tag)
-	// 		.addField("ID", message.author.id)
-	// 		.addField("Created At", message.author.createdAt);
-
-	// 	message.channel.send({embed: embed});
-
-	// 	return;
-	// }
-
-	// if(command === `${prefix}mute`) {
-	// 	if(!message.member.hasPermission("MANAGE_MESSAGES")) return message.channel.send("You do not have manage messages.");
-
-	// 	let toMute = message.mentions.members.first() || message.guild.members.get(args[0]);
-	// 	if(!toMute) return message.channel.send("You did not specify a user mention or ID!");
-
-	// 	if(toMute.id === message.author.id) return message.channel.send("You cannot mute yourself.");
-	// 	if(toMute.highestRole.position >= message.member.highestRole.position) return message.channel.send("You cannot mute a member who is higher or has the same role as you.");
-
-	// 	let role = message.guild.roles.find(r => r.name === "SADB Muted");
-	// 	if(!role) {
-	// 		try {
-	// 			role = await message.guild.createRole({
-	// 				name: "SADB Muted",
-	// 				color: "#000000",
-	// 				permissions: []
-	// 			});
-
-	// 			message.guild.channels.forEach(async (channel, id) => {
-	// 				await channel.overwritePermissions(role, {
-	// 					SEND_MESSAGES: false,
-	// 					ADD_REACTIONS: false
-	// 				});
-	// 			});
-	// 		} catch(e) {
-	// 			console.log(e.stack);
-	// 		}
-	// 	}
-
-	// 	if(toMute.roles.has(role.id)) return message.channel.send("This user is already muted!");
-
-	// 	await toMute.addRole(role);
-	// 	message.channel.send("I have muted them.");
-
-	// 	return;
-	// }
-
-	// if(command === `${prefix}unmute`) {
-	// 	if(!message.member.hasPermission("MANAGE_MESSAGES")) return message.channel.send("You do not have manage messages.");
-
-	// 	let toMute = message.mentions.members.first() || message.guild.members.get(args[0]);
-	// 	if(!toMute) return message.channel.send("You did not specify a user mention or ID!");
-
-	// 	let role = message.guild.roles.find(r => r.name === "SADB Muted");
-
-	// 	if(!role || !toMute.roles.has(role.id)) return message.channel.send("This user is not muted!");
-
-	// 	await toMute.removeRole(role);
-	// 	message.channel.send("I have unmuted them.");
-
-	// 	return;
-	// }
 });
 
 bot.login(botSettings.token);
