@@ -6,6 +6,8 @@
   "author": "Threebow",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.1.0"
+    "discord.js": "^11.1.0",
+    "mysql": "^2.14.1",
+    "snekfetch": "^3.2.9"
   }
 }
